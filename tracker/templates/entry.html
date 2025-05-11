@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Запись за {{ date|date:"d.m.Y" }}</h3>
+<form method="post" class="mb-3">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Сохранить</button>
+</form>
+{% if record %}
+    <p><em>Данные сохранены. Вы можете обновить значения и нажать "Сохранить" для изменения записи.</em></p>
+{% endif %}
+
+{% if record %}
+    <h4>Диаграмма распределения времени</h4>
+
+    <!-- Диаграмма (адаптивная) -->
+    <div class="mx-auto" style="max-width: 320px;">
+      <canvas id="dailyChart"></canvas>
+    </div>
+
+    <!-- Chart.js + плагин DataLabels -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const ctx = document.getElementById('dailyChart').getContext('2d');
+
+      new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: ['Полезно', 'Сомнительно', 'В никуда'],
+          datasets: [{
+            data: [
+              {{ record.hours_useful|default:0 }},
+              {{ record.hours_doubtful|default:0 }},
+              {{ record.hours_wasted|default:0 }}
+            ],
+            backgroundColor: ['#4caf50', '#ffc107', '#f44336']
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { display: false },
+            datalabels: {
+              color: '#fff',
+              font: { weight: 'bold', size: 14 },
+              formatter: (value, ctx) => {
+                const label = ctx.chart.data.labels[ctx.dataIndex];
+                const sum   = ctx.chart.data.datasets[0].data.reduce((a,b) => a + b, 0);
+                const pct   = sum ? Math.round((value / sum) * 100) : 0;
+                return `${label}\n${pct}%`;
+              }
+            },
+            tooltip: { enabled: true }
+          }
+        },
+        plugins: [ChartDataLabels]
+      });
+    });
+    </script>
+{% endif %}
+
+{% endblock %}

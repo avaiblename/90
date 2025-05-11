@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Календарь{% endblock %}
+
+{% block content %}
+<h3 class="mb-3">Выбор даты</h3>
+
+<!-- Контейнер для календаря -->
+<div id="calendar"></div>
+
+<!-- === СТИЛИ === -->
+<!-- Bootstrap уже подключён в base.html; добавим CSS FullCalendar + свою мелкую правку -->
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/main.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/bootstrap5.min.css" rel="stylesheet">
+
+<style>
+  /* Чуть «аккуратнее» клетки и цифры */
+  .fc-daygrid-day-number{
+      color:#212529;             /* обычный тёмно-серый текст */
+      text-decoration:none;      /* убираем синее подчёркивание ссылок */
+      font-weight:500;
+      font-size:1rem;            /* крупнее */
+  }
+  /* делаем клетки компактнее */
+  .fc-daygrid-body-natural .fc-daygrid-day{
+      padding:2px;
+  }
+  /* мягкий фон «сегодня» + анимация наведения */
+  .fc-day-today .fc-daygrid-day-frame{background:#eaf7ff}
+  .fc-daygrid-day-frame{
+      border-radius:.35rem;
+      transition:background .15s;
+      min-height:70px;           /* высота ячейки — регулируйте по вкусу */
+  }
+  .fc-daygrid-day-frame:hover{background:#f8f9fa;cursor:pointer}
+  /* Настроим заголовок месяца */
+  .fc-toolbar-title{
+      font-size:1.25rem;
+      font-weight:600;
+  }
+</style>
+
+<!-- === СКРИПТЫ === -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const el = document.getElementById('calendar');
+
+  const cal = new FullCalendar.Calendar(el, {
+    themeSystem: 'bootstrap5',      // чтобы цвета / шрифты match-ились с Bootstrap
+    initialView: 'dayGridMonth',
+    locale: 'ru',
+    height: 'auto',                 // календарь растягивается ровно под контент
+    aspectRatio: 1.35,              // регулирует размер клеток (чем больше — тем шире)
+    headerToolbar: {                // красивый тулбар
+      left: 'prev,next today',
+      center: 'title',
+      right: 'dayGridMonth,listWeek'
+    },
+    /* клик → переходим на страницу записи */
+    dateClick(info){
+      const y = info.date.getFullYear();
+      const m = String(info.date.getMonth()+1).padStart(2,'0');
+      const d = String(info.date.getDate()).padStart(2,'0');
+      window.location.href = `/entry/${y}-${m}-${d}/`;
+    },
+    /* (необязательно) подсветим даты, где уже есть записи  */
+    events: [
+      {% for rec in records %}
+        { start: '{{ rec.date|date:"Y-m-d" }}', title: '✔' },
+      {% endfor %}
+    ]
+  });
+
+  cal.render();
+});
+</script>
+{% endblock %}

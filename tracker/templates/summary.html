@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Статистика{% endblock %}
+
+{% block content %}
+<h3>Общая статистика</h3>
+
+<!-- Переключатель периода -->
+<div class="mb-3">
+    Период:
+    <a href="{% url 'summary' %}?period=week"  class="{% if period == 'week'  %}fw-bold{% endif %}">Неделя</a> |
+    <a href="{% url 'summary' %}?period=month" class="{% if period == 'month' %}fw-bold{% endif %}">Месяц</a> |
+    <a href="{% url 'summary' %}?period=all"   class="{% if period == 'all'   %}fw-bold{% endif %}">Все&nbsp;время</a>
+</div>
+
+<canvas id="summaryChart" width="600" height="400"></canvas>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const ctx = document.getElementById('summaryChart').getContext('2d');
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Полезно', 'Сомнительно', 'В никуда'],
+            datasets: [{
+                label: 'Часы',
+                data: [
+                    {{ totals.total_useful|default:0 }},
+                    {{ totals.total_doubtful|default:0 }},
+                    {{ totals.total_wasted|default:0 }}
+                ],
+                backgroundColor: ['#4caf50', '#ffc107', '#f44336']
+            }]
+        },
+        options: {
+            scales: { y: { beginAtZero: true } },
+            plugins: {
+                legend: { display: false },
+                title: {
+                    display: true,
+                    text: 'Период: {% if period == "week" %}посл. 7 дней{% elif period == "month" %}посл. 30 дней{% else %}всё время{% endif %}'
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
